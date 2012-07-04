@@ -1,22 +1,36 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
-
 /**
- * Cloudflare Client Interface API Library
+ * Cloudflare Client API Interface Library
+ *
+ * @author		Dustin Blake (Circuitbomb)
+ * @copyright	Copyright (c) 2012, Dustin Blake (http://circuitbomb.com)
+ * @license		WTFPL found at http://sam.zoy.org/wtfpl/COPYING
+ * @link		https://github.com/circuitbomb/Cloudflare-for-CodeIgniter
+ *
+ * Does not yet implement: 
+ *	-A NAME record updating
+ *	-DNS record deletion
+ *	-New DNS Record creation
+ *	
+ */
+ 
+/**
+ * Cloudflare
  *
  * @package		CodeIgniter
  * @subpackage	Libraries
  * @category	APIs/Cloudflare
  * @author		Dustin Blake (Circuitbomb)
- * @link		http://example.com
+ * @link		https://github.com/circuitbomb/Cloudflare-for-CodeIgniter
  */
 
 class Cloudflare {
 
 	private $api_Url = "https://www.cloudflare.com/api_json.html?";		//Request URL
-	private $log_Path = "assets/apis/cloudflare/";						//Path to log requests with ending backslash
-	private $token = "fbf5e59e37b399483255dc9a7454c6c57071a";			//Cloudflare API key
-	private $email = "circuitbomb.db@gmail.com";						//Associated Email address
-	private $default_Zone = "vilelabs.net";                           	//Default Zone
+	private $log_Path = "define-a-path/";								//Path to log requests with trailing slash
+	private $token = "your-cloudflare-token";							//Cloudflare API key
+	private $email = "your-email-address";								//Associated Email address
+	private $default_Zone = "a-default-zone";                           //Default Zone (e.g. example.com)
 	
 	private $data;
 	
@@ -40,9 +54,9 @@ class Cloudflare {
 		
 		$init = curl_init();
 		
-		$fp = fopen($this->logpath . "cloudflare_".$array['a']."-".date("Y-m-d").".txt", "a");
+		$fp = fopen($this->log_Path . "cloudflare_".$array['a']."-".date("Y-m-d").".txt", "a");
 		
-		curl_setopt($init, CURLOPT_URL, $this->direction);
+		curl_setopt($init, CURLOPT_URL, $this->api_Url);
 		curl_setopt($init, CURLOPT_FORBID_REUSE, TRUE);
 		curl_setopt($init, CURLOPT_SSL_VERIFYPEER, FALSE);
 		curl_setopt($init, CURLOPT_RETURNTRANSFER, 1);
@@ -88,10 +102,8 @@ class Cloudflare {
 		$this->data['a'] = 'stats';
 		$this->data['z'] = $zone;
 		$this->data['interval'] = $interval;
-		
-		$do_action = $this->retrieve_Data($this->data);
 			
-		return $do_action;
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/**
@@ -103,10 +115,7 @@ class Cloudflare {
 	public function get_MultiZone()
 	{	
 		$this->data['a'] = 'zone_load_multi';
-		
-		$do_action = $this->retrieve_Data($this->data);
-		
-		return $do_action;
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/**
@@ -119,10 +128,8 @@ class Cloudflare {
 	{
 		$this->data['a'] = 'rec_load_all';
 		$this->data['z'] = $zone;
-			
-		$do_action = $this->retrieve_Data($this->data);
 
-		return $do_action;
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
@@ -138,9 +145,7 @@ class Cloudflare {
 		$this->data['a'] = 'zone_check';
 		$this->data['z'] = $zone;
 		
-		$do_action = $this->retrieve_Data($this->data);
-		
-		return $do_action;
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
@@ -177,9 +182,7 @@ class Cloudflare {
 			$data['geo'] = $geo;
 		}
 		
-		$do_action = $this->retrieve_Data($this->data);
-		
-		return $do_action;
+		return $this->retrieve_Data($this->data);
 	
 	}
 	
@@ -189,69 +192,124 @@ class Cloudflare {
 	* @param	string
 	* @return	json
 	*/
-	public function get_IpsScore($ip_address = "0.0.0.0")
+	public function get_IpsScore($ip_address = NULL)
 	{
 		$this->data['a'] = 'ip_lkup';
 		$this->data['ip'] = $ip_address;
-		
-		$do_action = $this->retrieve_Data($this->data);
-		
-		return $do_action;
+
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Sets the Basic Security Level to I'M UNDER ATTACK! / HIGH / MEDIUM / LOW / ESSENTIALLY OFF.
+	* @access	public
+	* @param	string
+	* @param	string or NULL
+	* @return	json
+	*
+	* Security Levels
+	*	help - I'm under attack
+	*	high - High
+	*	med  - Medium
+	*	low  - Low
+	*	eoff - Essentially Off
 	*/
-	public function mod_SecLevel($zone = NULL, $level = "eoff")
+	public function mod_SecLevel($level = "med", $zone = NULL)
 	{
+		$this->data['a'] = 'sec_lvl';
+		$this->data['z'] = $zone;
+		$this->data['v'] = $level;
 		
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Sets the Caching Level to Aggressive or Basic.
+	* @access	public
+	* @param	string
+	* @param	string or NULL
+	* @return	json
+	*
+	* Cache Levels
+	*	agg - Aggressive
+	*	basic - Basic...duh
 	*/
-	public function mod_CacheLevel($zone = NULL, $level = "basic")
+	public function mod_CacheLevel($level = "basic", $zone = NULL)
 	{
+		$this->data['a'] = 'cache_lvl';
+		$this->data['z'] = $zone;
 		
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Allows you to toggle Development Mode on or off for a particular domain. 
+	* When Development Mode is on the cache is bypassed. 
+	* Development mode remains on for 3 hours or until when it is toggled back off.
+	* @access	public
+	* @param	boolean integer
+	* @param	string or NULL
+	* @return	json
 	*/
-	public function mod_DevMode($zone = NULL, $switch = "off")
+	public function mod_DevMode($switch = 0, $zone = NULL)
 	{
+		$this->data['a'] = 'devmode';
+		$this->data['z'] = $zone;
+		$this->data['v'] = $switch;
 		
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Purge CloudFlare of any cached files. It may take up to 48 hours for the cache to rebuild and optimum performance to be achieved so this function should be used sparingly.
+	* @access	public
+	* @param	string or NULL
+	* @return	json
 	*/
 	public function mod_PurgeCache($zone = NULL)
 	{
+		$this->data['a'] = 'fpurge_ts';
+		$this->data['z'] = $zone;
+		$this->data['v'] = 1;
+
+		return $this->retrieve_Data($this->data);
 		
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Tells CloudFlare to take a new image of your site.
+	* @access	public
+	* @param	integer
+	* @return	json
 	*/
 	public function mod_ZoneGrab($zone_id = NULL)
 	{
+		if(is_null($zone_id))
+		{
+			$json = $this->check_Zone();
+			$array = json_decode($json, TRUE);
+			
+			$zone_id = $array[0][0][0];	
+		}
 		
+		$this->data['a'] = 'zone_grab';
+		$this->data['zid'] = $zone_id;
+		
+		return $this->retrieve_Data($this->data);
+	}
+	
+	/*
+	* Ban an IP Address
+	* @access	public
+	* @param	string
+	* @return	json
+	*/
+	public function mod_BlackIp($ip_Address)
+	{
+		$this->data['a'] = 'ban';
+		$this->data['key'] = $ip_Address;
+		
+		return $this->retrieve_Data($this->data);
 	}
 	
 	/*
@@ -260,31 +318,28 @@ class Cloudflare {
 	* @param
 	* @return
 	*/
-	public function mod_BlackIp($ip_address = NULL)
+	public function mod_WhiteIp($ip_Address)
 	{
+		$this->data['a'] = 'wl';
+		$this->data['key'] = $ip_Address;
 		
+		return $this->retrieve_Data($this->data);	
 	}
 	
 	/*
-	* 
-	* @access
-	* @param
-	* @return
+	* Toggles IPv6 support
+	* @access 	public
+	* @param	boolean integer
+	* @param	string or NULL
+	* @return	json
 	*/
-	public function mod_WhiteIp($ip_address = NULL)
+	public function mod_Ipv6($switch = 0, $zone = NULL)
 	{
+		$this->data['a'] = 'ipv46';
+		$this->data['z'] = $zone;
+		$this->data['v'] = $switch;
 		
-	}
-	
-	/*
-	* 
-	* @access
-	* @param
-	* @return
-	*/
-	public function mod_Ipv6($zone = NULL, $switch = 0)
-	{
-		
+		return $this->retrieve_Data($this->data);
 	}
 
 }
